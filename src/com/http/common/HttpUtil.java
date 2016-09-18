@@ -1,16 +1,13 @@
 package com.http.common;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
@@ -19,47 +16,58 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.google.gson.reflect.TypeToken;
+import com.http.common.cookie.ClearableCookieJar;
+import com.http.common.cookie.PersistentCookieJar;
+import com.http.common.cookie.cache.SetCookieCache;
+import com.http.common.cookie.persistence.SharedPrefsCookiePersistor;
+import com.http.common.interceptor.LoggerInterceptor;
 import com.http.common.util.CertificateUtil;
 
-import okhttp3.CipherSuite;
-import okhttp3.ConnectionSpec;
+import android.content.Context;
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
-import okhttp3.TlsVersion;
 
-public class HttpsConnect implements Connect {
-	private static HttpsConnect connect = new HttpsConnect();
+public class HttpUtil {
 
-	private HttpsConnect() {
+	private static Context context;
+	private static OkHttpClient client;
+
+	public static void init(Context context) {
+		HttpUtil.context = context;
 	}
 
-	public static HttpsConnect getInstance() {
-		return connect;
+	private HttpUtil() {
 	}
 
-	@Override
-	public <T> HttpTask<T> get(ServiceListener<T> callback, String url, Map<String, Object> param, TypeToken<T> type) {
-		HttpTask<T> httpTask = new HttpTask<T>(ConnectType.get, getClient(), callback, type);
-		httpTask.execute(url, param, null);
-		return httpTask;
+	public static HttpRequest newConnect() {
+		return new HttpRequest();
 	}
 
-	@Override
-	public <T> HttpTask<T> post(ServiceListener<T> callback, String url, Map<String, Object> param, TypeToken<T> type) {
-		HttpTask<T> httpTask = new HttpTask<T>(ConnectType.post, getClient(), callback, type);
-		httpTask.execute(url, param, null);
-		return httpTask;
+	public static void cancelTag(Object tag) {
+		for (Call call : client.dispatcher().queuedCalls()) {
+			if (tag.equals(call.request().tag())) {
+				call.cancel();
+			}
+		}
+		for (Call call : client.dispatcher().runningCalls()) {
+			if (tag.equals(call.request().tag())) {
+				call.cancel();
+			}
+		}
 	}
 
-	@Override
-	public <T> HttpTask<T> post(ServiceListener<T> callback, String url, Map<String, Object> param, List<File> files,
-			TypeToken<T> type) {
-		HttpTask<T> httpTask = new HttpTask<T>(ConnectType.post, getClient(), callback, type);
-		httpTask.execute(url, param, files);
-		return httpTask;
+	public static OkHttpClient getClient() {
+		if (client == null) {
+			synchronized (HttpUtil.class) {
+				if (client == null) {
+					client = createClient();
+				}
+			}
+		}
+		return client;
 	}
 
-	private OkHttpClient getClient() {
+	private static OkHttpClient createClient() {
 		// 添加证书
 		List<InputStream> certificates = new ArrayList<>();
 		List<byte[]> certs_data = CertificateUtil.getCertificatesData();
@@ -77,12 +85,13 @@ public class HttpsConnect implements Connect {
 		if (sslSocketFactory != null) {
 			builder.sslSocketFactory(sslSocketFactory);
 		}
-
-		ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(TlsVersion.TLS_1_2)
-				.cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-						CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-						CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256)
-				.build();
+		// 发现这段代码注释掉也能正常使用https
+		// ConnectionSpec spec = new
+		// ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(TlsVersion.TLS_1_2)
+		// .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		// CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		// CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256)
+		// .build();
 
 		// TODO生产环境中要注释掉
 		builder.hostnameVerifier(new HostnameVerifier() {
@@ -93,9 +102,16 @@ public class HttpsConnect implements Connect {
 			}
 		});
 
-		OkHttpClient mOkHttpClient = builder.connectionSpecs(Collections.singletonList(spec))
+		// 设置cookie
+		ClearableCookieJar cookieJar = new PersistentCookieJar(new SetCookieCache(),
+				new SharedPrefsCookiePersistor(context));
+
+		OkHttpClient mOkHttpClient = builder/*
+											 * .connectionSpecs(Collections.
+											 * singletonList(spec))
+											 */
 				.connectTimeout(4, TimeUnit.SECONDS).readTimeout(4, TimeUnit.SECONDS).writeTimeout(4, TimeUnit.SECONDS)
-				.build();
+				.cookieJar(cookieJar).addInterceptor(new LoggerInterceptor(HttpUtil.class.getSimpleName())).build();
 		return mOkHttpClient;
 	}
 
@@ -137,4 +153,5 @@ public class HttpsConnect implements Connect {
 		return null;
 
 	}
+
 }

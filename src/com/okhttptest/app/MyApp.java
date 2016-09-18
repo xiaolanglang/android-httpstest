@@ -1,8 +1,9 @@
-package com.httpstest.app;
+package com.okhttptest.app;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.http.common.HttpUtil;
 import com.http.common.util.CertificateUtil;
 
 import android.app.Application;
@@ -10,7 +11,6 @@ import android.app.Application;
 public class MyApp extends Application {
 	@Override
 	public void onCreate() {
-		super.onCreate();
 		// 添加https证书
 		try {
 			String[] certFiles = this.getAssets().list("certs");
@@ -23,5 +23,7 @@ public class MyApp extends Application {
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}
+
+		HttpUtil.init(getApplicationContext());
 	}
 }
