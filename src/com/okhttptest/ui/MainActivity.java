@@ -2,8 +2,13 @@ package com.okhttptest.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.codec.binary.Base64;
 
 import com.example.httpstest.R;
 import com.google.gson.Gson;
@@ -15,6 +20,8 @@ import com.http.common.callback.ResultCallBack;
 import com.http.common.callback.StringCallback;
 import com.http.common.cookie.ClearableCookieJar;
 import com.okhttptest.entity.User;
+import com.okhttptest.util.ByteUtil;
+import com.okhttptest.util.DigestsUtil;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -39,10 +46,13 @@ public class MainActivity extends Activity {
 	private String loginUrl = "http://m.cgotravel.com/travel/login";
 	private String loginOutUrl = "http://m.cgotravel.com/travel/loginout";
 	private String testLoginUrl = "http://m.cgotravel.com/travel/mine";
+	private String deviceLogin = "http://pre.mcomm.com.cn/user/device/deviceLogin";
+	private Map<String, Object> params = new HashMap<>();
+
 	private ProgressBar mProgressBar;
 	private ImageView mImageView;
 	private TextView mTv;
-	private Map<String, Object> params = new HashMap<>();
+	private Toast toast;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -177,14 +187,17 @@ public class MainActivity extends Activity {
 		Map<String, Object> params = new HashMap<>();
 		params.put("username", "test");
 		params.put("password", "qwertyuio");
+		analysisIP(loginUrl);
 		HttpUtil.newConnect().post(loginUrl).setParams(params).execute(callBack);
 	}
 
 	public void loginOut(View view) {
+		analysisIP(loginOutUrl);
 		HttpUtil.newConnect().get(loginOutUrl).execute(callBack);
 	}
 
 	public void testLogin(View view) {
+		analysisIP(testLoginUrl);
 		HttpUtil.newConnect().get(testLoginUrl).execute(callBack);
 	}
 
@@ -195,8 +208,23 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	public void deviceLogin(View view) throws UnsupportedEncodingException {
+		Map<String, Object> params = new HashMap<>();
+		String json = "{\"deviceId\":\"1111111134121111\",\"type\":\"0\",\"client\":\"pc\"}";
+		Base64 base64 = new Base64();
+		byte[] as = base64.encode(json.getBytes("UTF-8"));
+		String base64Str = new String(as, "UTF-8");
+		long timestamp = System.currentTimeMillis() / 1000l;
+		as = DigestsUtil.md5((json + timestamp + "7B8AE5032B6A48DFAE1B0ED0C6E01D51").getBytes("UTF-8"));
+		params.put("encodeParams", base64Str);
+		params.put("sign", ByteUtil.toString(as).replace(" ", ""));
+		params.put("accountId", "account001");
+		params.put("timestamp", timestamp);
+		analysisIP(deviceLogin);
+		HttpUtil.newConnect().post(deviceLogin).setParams(params).execute(callBack);
+	}
+
 	private void clearUi() {
-		Toast.makeText(MainActivity.this, "开始发送请求", Toast.LENGTH_SHORT).show();
 		mTv.setText("");
 		mImageView.setImageBitmap(null);
 		mProgressBar.setProgress(0);
@@ -357,4 +385,30 @@ public class MainActivity extends Activity {
 		}
 	};
 
+	private void analysisIP(final String url) {
+		new Thread(new Runnable() {
+			public void run() {
+				InetAddress id = null;
+				String str = null;
+				try {
+					id = InetAddress.getByName(url.replace("http://", "").split("/")[0]);
+				} catch (UnknownHostException e) {
+					str = e.getMessage();
+				}
+				if (str == null) {
+					str = id.getHostAddress();
+				}
+				final String res = str;
+				runOnUiThread(new Runnable() {
+					public void run() {
+						if (toast != null) {
+							toast.cancel();
+						}
+						toast = Toast.makeText(MainActivity.this, "访问IP：" + res, Toast.LENGTH_SHORT);
+						toast.show();
+					}
+				});
+			}
+		}).start();
+	}
 }
