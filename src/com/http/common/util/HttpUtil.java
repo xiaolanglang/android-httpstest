@@ -102,7 +102,7 @@ public class HttpUtil {
 	}
 
 	/**
-	 * 添加证书,实现客户端和服务器的单向验证
+	 * 添加证书,实现客户端和服务器的双向验证
 	 * 
 	 * @param certificates
 	 * @param clientCert
@@ -116,7 +116,7 @@ public class HttpUtil {
 		CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
 
 		char[] password = "ufueo*&2434%jfiah1234".toCharArray(); // 任意密码
-		char[] password2 = "123456".toCharArray(); // 任意密码
+		char[] password2 = "123456".toCharArray();// 这密钥就是在生成PKCS12的时候设置的密码
 		KeyStore serverkeyStore = newEmptyKeyStore(password);
 		KeyStore clientkeyStore = KeyStore.getInstance(KEY_STORE_TYPE_P12);
 
@@ -151,7 +151,6 @@ public class HttpUtil {
 	 * @throws IOException
 	 * 
 	 */
-
 	private static void setSocketFactory(List<InputStream> certificates, Builder builder)
 			throws GeneralSecurityException, IOException {
 		CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
