@@ -13,12 +13,12 @@ import org.apache.commons.codec.binary.Base64;
 import com.example.httpstest.R;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.http.common.HttpUtil;
 import com.http.common.callback.FileCallback;
 import com.http.common.callback.ImageCallback;
 import com.http.common.callback.ResultCallBack;
 import com.http.common.callback.StringCallback;
 import com.http.common.cookie.ClearableCookieJar;
+import com.http.common.util.HttpUtil;
 import com.okhttptest.entity.User;
 import com.okhttptest.util.ByteUtil;
 import com.okhttptest.util.DigestsUtil;
@@ -37,8 +37,8 @@ import okhttp3.Response;
 
 public class MainActivity extends Activity {
 
-	private String hosts = "https://192.168.0.102";
-	private String host = "http://192.168.0.102:8080";
+	private String hosts = "https://192.168.0.103";
+	private String host = "http://192.168.0.103:8080";
 	private String url = host + "/mvc/admin/home/search";
 	private String uploadUrl = host + "/mvc/admin/home/upload";
 	private String imageUrl = "http://pic15.nipic.com/20110616/7034149_164010530126_2.jpg";
@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
 	private String loginOutUrl = "http://m.cgotravel.com/travel/loginout";
 	private String testLoginUrl = "http://m.cgotravel.com/travel/mine";
 	private String deviceLogin = "http://pre.mcomm.com.cn/user/device/deviceLogin";
+	private String deviceLoginIp = "http://58.211.138.207/user/device/deviceLogin";
 	private Map<String, Object> params = new HashMap<>();
 
 	private ProgressBar mProgressBar;
@@ -68,6 +69,7 @@ public class MainActivity extends Activity {
 		params.put("username", "张三");
 		params.put("id", "id1234dfe");
 		params.put("age", 123);
+
 	}
 
 	public void getString(View view) {
@@ -222,6 +224,22 @@ public class MainActivity extends Activity {
 		params.put("timestamp", timestamp);
 		analysisIP(deviceLogin);
 		HttpUtil.newConnect().post(deviceLogin).setParams(params).execute(callBack);
+	}
+
+	public void deviceLogin3(View view) throws UnsupportedEncodingException {
+		Map<String, Object> params = new HashMap<>();
+		String json = "{\"deviceId\":\"1111111134121111\",\"type\":\"0\",\"client\":\"pc\"}";
+		Base64 base64 = new Base64();
+		byte[] as = base64.encode(json.getBytes("UTF-8"));
+		String base64Str = new String(as, "UTF-8");
+		long timestamp = System.currentTimeMillis() / 1000l;
+		as = DigestsUtil.md5((json + timestamp + "7B8AE5032B6A48DFAE1B0ED0C6E01D51").getBytes("UTF-8"));
+		params.put("encodeParams", base64Str);
+		params.put("sign", ByteUtil.toString(as).replace(" ", ""));
+		params.put("accountId", "account001");
+		params.put("timestamp", timestamp);
+		analysisIP(deviceLogin);
+		HttpUtil.newConnect().post(deviceLoginIp).setParams(params).execute(callBack);
 	}
 
 	private void clearUi() {

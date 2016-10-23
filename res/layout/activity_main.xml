@@ -106,6 +106,12 @@
                 android:layout_height="wrap_content"
                 android:onClick="deviceLogin"
                 android:text="Device Login" />
+
+             <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="deviceLogin3"
+                android:text="Device Login IP" />
         </com.okhttptest.views.FlowLayout>
 
         <ProgressBar

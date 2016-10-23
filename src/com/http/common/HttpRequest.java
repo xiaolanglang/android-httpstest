@@ -8,27 +8,25 @@ import java.util.Map;
 import java.util.Set;
 
 import com.http.common.callback.ResultCallBack;
+import com.http.common.util.HttpUtil;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class HttpRequest {
 
-	private String TAG = getClass().getSimpleName();
 	private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
 	private ConnectType connectType;
 	private List<File> files;
 	private Map<String, Object> params;
 	private String url;
 	private ResultCallBack mlistener;
-	private final static OkHttpClient CLIENT = HttpUtil.getClient();
 	private Object tag;
 
 	public HttpRequest get(String url) {
@@ -74,7 +72,7 @@ public class HttpRequest {
 	public <Result> Call execute(final ResultCallBack listener) {
 		this.mlistener = listener;
 		Call call = null;
-		call = CLIENT.newCall(getRequest());
+		call = HttpUtil.getClient().newCall(getRequest());
 		mlistener.preExecute();
 		call.enqueue(new Callback() {
 
