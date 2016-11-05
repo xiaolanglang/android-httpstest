@@ -112,6 +112,25 @@
                 android:layout_height="wrap_content"
                 android:onClick="deviceLogin3"
                 android:text="Device Login IP" />
+             
+             <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="ZH_Login"
+                android:text="ZH_Login" />
+             
+             <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="ZH_LoginOut"
+                android:text="ZH_LoginOut" />
+             
+             <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="ZH_TestLogin"
+                android:text="ZH_TestLogin" />
+             
         </com.okhttptest.views.FlowLayout>
 
         <ProgressBar

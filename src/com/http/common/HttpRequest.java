@@ -13,6 +13,8 @@ import com.http.common.util.HttpUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
+import okhttp3.Headers;
+import okhttp3.Headers.Builder;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
@@ -28,6 +30,7 @@ public class HttpRequest {
 	private String url;
 	private ResultCallBack mlistener;
 	private Object tag;
+	private Builder headers = new Headers.Builder();
 
 	public HttpRequest get(String url) {
 		this.connectType = ConnectType.get;
@@ -46,8 +49,11 @@ public class HttpRequest {
 		return this;
 	}
 
-	public HttpRequest setHeads(Map<String, Object> heads) {
-		// TODO 添加头
+	public HttpRequest addHeader(Map<String, String> header) {
+		List<String> list = new ArrayList<>(header.keySet());
+		for (String name : list) {
+			headers.add(name, header.get(name));
+		}
 		return this;
 	}
 
@@ -120,7 +126,7 @@ public class HttpRequest {
 			builder.deleteCharAt(builder.length() - 1);// 删除最后一位&
 			url += builder.toString();
 		}
-		return new Request.Builder().url(url).get().tag(tag).build();
+		return new Request.Builder().url(url).headers(headers.build()).get().tag(tag).build();
 	}
 
 	private Request postForReq() {
@@ -147,7 +153,8 @@ public class HttpRequest {
 			}
 			requestBody = builder.build();
 		}
-		return new Request.Builder().url(url).post(new CountingRequestBody(requestBody, mlistener)).tag(tag).build();
+		return new Request.Builder().url(url).headers(headers.build())
+				.post(new CountingRequestBody(requestBody, mlistener)).tag(tag).build();
 	}
 
 	private Request getRequest() {

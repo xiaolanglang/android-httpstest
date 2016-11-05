@@ -49,6 +49,11 @@ public class MainActivity extends Activity {
 	private String deviceLogin = "http://pre.mcomm.com.cn/user/device/deviceLogin";
 	private String deviceLoginIp = "http://58.211.138.207/user/device/deviceLogin";
 	private Map<String, Object> params = new HashMap<>();
+	private Map<String, String> header = new HashMap<>();
+
+	private String zh_login = "http://192.168.0.103:8080/zh-app/login";
+	private String zh_loginOut = "http://192.168.0.103:8080/zh-app/loginout";
+	private String zh_testlogin = "http://192.168.0.103:8080/zh-app/test?name=中文";
 
 	private ProgressBar mProgressBar;
 	private ImageView mImageView;
@@ -69,6 +74,8 @@ public class MainActivity extends Activity {
 		params.put("username", "张三");
 		params.put("id", "id1234dfe");
 		params.put("age", 123);
+
+		header.put("User-Agent", "Android " + android.os.Build.VERSION.RELEASE);
 
 	}
 
@@ -240,6 +247,21 @@ public class MainActivity extends Activity {
 		params.put("timestamp", timestamp);
 		analysisIP(deviceLogin);
 		HttpUtil.newConnect().post(deviceLoginIp).setParams(params).execute(callBack);
+	}
+
+	public void ZH_Login(View v) throws UnsupportedEncodingException {
+		Map<String, Object> params = new HashMap<>();
+		params.put("username", "test");
+		params.put("password", "123456");
+		HttpUtil.newConnect().post(zh_login).addHeader(header).setParams(params).execute(callBack);
+	}
+
+	public void ZH_LoginOut(View v) {
+		HttpUtil.newConnect().get(zh_loginOut).addHeader(header).execute(callBack);
+	}
+
+	public void ZH_TestLogin(View v) {
+		HttpUtil.newConnect().get(zh_testlogin).addHeader(header).execute(callBack);
 	}
 
 	private void clearUi() {
